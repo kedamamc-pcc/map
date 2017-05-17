@@ -1,0 +1,37 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta content="IE=edge" http-equiv="X-UA-Compatible">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>KedamaMC Unoffical Map</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<link rel="stylesheet" href="style.css">
+
+<div id="page">
+  <div id="loading">Loading...</div>
+  <div id="map"></div>
+  <span id="title"><a href="https://craft.moe">毛玉線圈物語</a>非官方主世界地图</span>
+  <span id="hamburger" class="map-btn glyphicon glyphicon-menu-hamburger"></span>
+  <div id="menu">
+    <section>
+      <h2>聚落</h2>
+      <ul>
+        <li>
+          <strong>现充镇</strong>
+
+        </li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<script>
+  var $burger = document.getElementById('hamburger');
+  var $menu = document.getElementById('menu');
+  $burger.addEventListener('click', function () {
+    var isOpening = !$burger.classList.contains('opened');
+    $burger.classList[isOpening ? 'add' : 'remove']('glyphicon-menu-left');
+    $burger.classList[isOpening ? 'remove' : 'add']('glyphicon-menu-hamburger');
+    $burger.classList.toggle('opened', isOpening);
+    $menu.classList.toggle('opened', isOpening);
+  });
+</script>
