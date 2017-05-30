@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "dev": "postcss src/style/style.pcss -o build/style.css -w",
+    "build": "postcss src/style/style.pcss -o build/style.css"
+  },
+  "devDependencies": {
+    "babel": "^6.23.0",
+    "babel-loader": "^7.0.0",
+    "extract-text-webpack-plugin": "^2.1.0",
+    "postcss": "^6.0.1",
+    "postcss-cli": "^4.0.0",
+    "postcss-cssnext": "^2.11.0",
+    "postcss-import": "^10.0.0",
+    "postcss-loader": "^2.0.5"
+  }
+}
