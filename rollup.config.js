@@ -5,5 +5,4 @@ export default {
   dest: 'build/script.js',
   format: 'iife',
   plugins: [buble()],
-  treeshake: false,
 };

@@ -1,3 +1,5 @@
+import Icons from './icons.js';
+
 const SCALE = 100;
 
 const projection = {
@@ -29,6 +31,14 @@ class Map extends google.maps.Map {
     let mapType = new google.maps.ImageMapType(opts);
     mapType.projection = projection;
     this.mapTypes.set(opts.id, mapType);
+  }
+
+  mark(coord, opts = {}, override = opts) {
+    let marker = new google.maps.Marker({
+      map: this,
+      position: projection.fromPointToLatLng(coord),
+      icon: Icons[opts.icon || 'default'],
+    });
   }
 }
 

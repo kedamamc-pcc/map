@@ -1,22 +1,27 @@
 import Map from './map';
+import mapTypeOpts from './maptypes';
 
-const journeyMapZooms = ['0.0625', '0.125', '0.25', '0.5', '1', '2', '4'];
+new Vue({
+  el: '#page',
+  data: {
+    _map: null,
+    _mapTypes: mapTypeOpts,
 
-!function init() {
-  const map = new Map(document.getElementById('map'), {
-    zoom: 4 + 1,
-    backgroundColor: '#000',
-    mapTypeId: 'v2-day',
-  });
-
-  map.addMapType({
-    id: 'v2-day',
-    name: '[v2] 日间',
-    getTileUrl({x, y}, zoom) {
-      return `tiles/journeymap/images/z${journeyMapZooms[zoom - 1]}/${x},${y}.png`;
+    isDrawerOpened: false,
+  },
+  methods: {
+    changeMapType(id) {
+      this.$data._map.setMapTypeId(id);
     },
-    tileSize: [512, 512],
-    minZoom: 1,
-    maxZoom: journeyMapZooms.length,
-  });
-}();
+  },
+  mounted() {
+    const map = this.$data._map = new Map(document.getElementById('map'), {
+      zoom: 4 + 1,
+      backgroundColor: '#000',
+      mapTypeId: 'v2-day',
+    });
+    mapTypeOpts.forEach(opts => {
+      map.addMapType(opts)
+    });
+  },
+});
