@@ -1,6 +1,8 @@
 import Icons from './icons.js';
 
+const Z1 = 4;
 const SCALE = 100;
+const FACTOR = 1 << Z1;
 
 const projection = {
   fromLatLngToPoint(latLng) {
@@ -10,6 +12,10 @@ const projection = {
   fromPointToLatLng(point) {
     let [x, z] = point instanceof Array ? point : [point.x, point.y];
     return new google.maps.LatLng(z / SCALE, x / SCALE, true);
+  },
+
+  fromBlockToLatLng(coord) {
+    return this.fromPointToLatLng(coord.map(c => (c + .5) / FACTOR));
   }
 };
 
@@ -22,7 +28,7 @@ class Map extends google.maps.Map {
       scaleControl: false,
       zoomControl: true,
     }, opts);
-    _opts.center = projection.fromPointToLatLng(_opts.center || [0, 0]);
+    _opts.center = projection.fromBlockToLatLng(_opts.center || [0, 0]);
     super(el, _opts);
   }
 
@@ -36,7 +42,7 @@ class Map extends google.maps.Map {
   mark(coord, opts = {}, override = opts) {
     let marker = new google.maps.Marker({
       map: this,
-      position: projection.fromPointToLatLng(coord),
+      position: projection.fromBlockToLatLng(coord),
       icon: Icons[opts.icon || 'default'],
     });
   }
