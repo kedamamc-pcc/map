@@ -1,6 +1,9 @@
 import Map from './map';
 import mapTypeOpts from './maptypes';
 
+const RE_HASH = /^#\/(\d+)\/(\d+)\/(-?\d+,-?\d+)/;
+const defHashTokens = RE_HASH.exec(RE_HASH.test(location.hash) ? location.hash : '#/0/4/0,0');
+
 new Vue({
   el: '#page',
   data: {
@@ -8,54 +11,58 @@ new Vue({
     _mapTypes: mapTypeOpts,
 
     isDrawerOpened: false,
+    isDragging: false,
 
-    mapTypeNum: 0,
-    zoom: 4,
-    center: [0, 0],
+    mapTypeNum: +defHashTokens[1],
+    zoom: +defHashTokens[2],
+    center: defHashTokens[3].split(',').map(n => +n),
   },
   computed: {
+    hash() {
+      return `#/${this.mapTypeNum}/${this.zoom}/${this.center.join(',')}`;
+    },
+  },
+  watch: {
     hash: {
-      get() {
-        console.log('reading hash');
-        let tokens = location.hash.slice(1).split('/');
-        if (tokens.length === 3) {
-          this.mapTypeNum = Number(tokens[0]);
-          this.zoom = Number(tokens[1]);
-          this.center = tokens[2].split(',').map(n => Number(n));
-          return true;
-        } else {
-          return false;
-        }
+      handler: function (val) {
+        location.hash = val;
       },
-      set(upd) {
-        let obj = Object.assign({}, this.hash, upd);
-        location.hash = `#${obj.mapTypeNum}/${obj.zoom}/${obj.center.join(',')}`;
-      },
+      immediate: true,
     },
   },
   methods: {
     changeMapType(id) {
       this.$data._map.setMapTypeId(id);
     },
+    onhashchange({newURL}) {
+      let newHash = newURL.slice(newURL.indexOf('#'));
+      if (RE_HASH.test(newHash)) {
+        let tokens = RE_HASH.exec(newHash);
+        this.mapTypeNum = +tokens[1];
+        this.zoom = +tokens[2];
+        this.center = tokens[3].split(',').map(n => +n);
+      }
+    },
   },
-  beforeMount() {
-    if (!this.hash) {
-      this.hash = {
-        mapTypeNum: this.mapTypeNum,
-        zoom: this.zoom,
-        center: this.center,
-      };
-    }
+  created() {
+    // 监听 Hash 外部变化
+    window.onhashchange = this.onhashchange;
   },
   mounted() {
+    // 实例化地图对象
     const map = this.$data._map = new Map(document.getElementById('map'), {
       mapTypeId: mapTypeOpts[this.mapTypeNum].id,
       zoom: this.zoom,
       center: this.center,
       backgroundColor: '#000',
     });
+    // 添加视图类型
     mapTypeOpts.forEach(opts => {
       map.addMapType(opts)
+    });
+    // 添加事件
+    map.addListener('center_changed', _=> {
+      this.center = map.getCenterCoord();
     });
   },
 });

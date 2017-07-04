@@ -8,15 +8,20 @@ const projection = {
   fromLatLngToPoint(latLng) {
     return new google.maps.Point(latLng.lng() * SCALE, latLng.lat() * SCALE);
   },
-
   fromPointToLatLng(point) {
     let [x, z] = point instanceof Array ? point : [point.x, point.y];
     return new google.maps.LatLng(z / SCALE, x / SCALE, true);
   },
 
+};
+const conversion = {
+  fromLatLngToBlock(latLng) {
+    let point = projection.fromLatLngToPoint(latLng);
+    return [point.x, point.y].map(n => Math.floor(n * FACTOR));
+  },
   fromBlockToLatLng(coord) {
-    return this.fromPointToLatLng(coord.map(c => (c + .5) / FACTOR));
-  }
+    return projection.fromPointToLatLng(coord.map(c => (c + .5) / FACTOR));
+  },
 };
 
 class Map extends google.maps.Map {
@@ -28,8 +33,16 @@ class Map extends google.maps.Map {
       scaleControl: false,
       zoomControl: true,
     }, opts);
-    _opts.center = projection.fromBlockToLatLng(_opts.center || [0, 0]);
+    _opts.center = conversion.fromBlockToLatLng(_opts.center || [0, 0]);
+
     super(el, _opts);
+  }
+
+  setOptions(opts) {
+    if (opts.center) {
+      opts.center = conversion.fromBlockToLatLng(opts.center);
+    }
+    super.setOptions(opts);
   }
 
   addMapType(opts) {
@@ -39,10 +52,14 @@ class Map extends google.maps.Map {
     this.mapTypes.set(opts.id, mapType);
   }
 
+  getCenterCoord() {
+    return conversion.fromLatLngToBlock(super.getCenter());
+  }
+
   mark(coord, opts = {}, override = opts) {
     let marker = new google.maps.Marker({
       map: this,
-      position: projection.fromBlockToLatLng(coord),
+      position: conversion.fromBlockToLatLng(coord),
       icon: Icons[opts.icon || 'default'],
     });
   }

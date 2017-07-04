@@ -11,7 +11,6 @@ var projection = {
   fromLatLngToPoint: function fromLatLngToPoint(latLng) {
     return new google.maps.Point(latLng.lng() * SCALE, latLng.lat() * SCALE);
   },
-
   fromPointToLatLng: function fromPointToLatLng(point) {
     var ref = point instanceof Array ? point : [point.x, point.y];
     var x = ref[0];
@@ -19,9 +18,15 @@ var projection = {
     return new google.maps.LatLng(z / SCALE, x / SCALE, true);
   },
 
+};
+var conversion = {
+  fromLatLngToBlock: function fromLatLngToBlock(latLng) {
+    var point = projection.fromLatLngToPoint(latLng);
+    return [point.x, point.y].map(function (n) { return Math.floor(n * FACTOR); });
+  },
   fromBlockToLatLng: function fromBlockToLatLng(coord) {
-    return this.fromPointToLatLng(coord.map(function (c) { return (c + .5) / FACTOR; }));
-  }
+    return projection.fromPointToLatLng(coord.map(function (c) { return (c + .5) / FACTOR; }));
+  },
 };
 
 var Map = (function (superclass) {
@@ -33,13 +38,21 @@ var Map = (function (superclass) {
       scaleControl: false,
       zoomControl: true,
     }, opts);
-    _opts.center = projection.fromBlockToLatLng(_opts.center || [0, 0]);
+    _opts.center = conversion.fromBlockToLatLng(_opts.center || [0, 0]);
+
     superclass.call(this, el, _opts);
   }
 
   if ( superclass ) Map.__proto__ = superclass;
   Map.prototype = Object.create( superclass && superclass.prototype );
   Map.prototype.constructor = Map;
+
+  Map.prototype.setOptions = function setOptions (opts) {
+    if (opts.center) {
+      opts.center = conversion.fromBlockToLatLng(opts.center);
+    }
+    superclass.prototype.setOptions.call(this, opts);
+  };
 
   Map.prototype.addMapType = function addMapType (opts) {
     opts.tileSize = new (Function.prototype.bind.apply( google.maps.Size, [ null ].concat( opts.tileSize) ));
@@ -48,13 +61,17 @@ var Map = (function (superclass) {
     this.mapTypes.set(opts.id, mapType);
   };
 
+  Map.prototype.getCenterCoord = function getCenterCoord () {
+    return conversion.fromLatLngToBlock(superclass.prototype.getCenter.call(this));
+  };
+
   Map.prototype.mark = function mark (coord, opts, override) {
     if ( opts === void 0 ) opts = {};
     if ( override === void 0 ) override = opts;
 
     var marker = new google.maps.Marker({
       map: this,
-      position: projection.fromBlockToLatLng(coord),
+      position: conversion.fromBlockToLatLng(coord),
       icon: Icons[opts.icon || 'default'],
     });
   };
@@ -106,6 +123,9 @@ var mapTypeOpts = [
     maxZoom: journeyMapZooms.length,
   } ];
 
+var RE_HASH = /^#\/(\d+)\/(\d+)\/(-?\d+,-?\d+)/;
+var defHashTokens = RE_HASH.exec(RE_HASH.test(location.hash) ? location.hash : '#/0/4/0,0');
+
 new Vue({
   el: '#page',
   data: {
@@ -113,54 +133,62 @@ new Vue({
     _mapTypes: mapTypeOpts,
 
     isDrawerOpened: false,
+    isDragging: false,
 
-    mapTypeNum: 0,
-    zoom: 4,
-    center: [0, 0],
+    mapTypeNum: +defHashTokens[1],
+    zoom: +defHashTokens[2],
+    center: defHashTokens[3].split(',').map(function (n) { return +n; }),
   },
   computed: {
+    hash: function hash() {
+      return ("#/" + (this.mapTypeNum) + "/" + (this.zoom) + "/" + (this.center.join(',')));
+    },
+  },
+  watch: {
     hash: {
-      get: function get() {
-        console.log('reading hash');
-        var tokens = location.hash.slice(1).split('/');
-        if (tokens.length === 3) {
-          this.mapTypeNum = Number(tokens[0]);
-          this.zoom = Number(tokens[1]);
-          this.center = tokens[2].split(',').map(function (n) { return Number(n); });
-          return true;
-        } else {
-          return false;
-        }
+      handler: function (val) {
+        location.hash = val;
       },
-      set: function set(upd) {
-        var obj = Object.assign({}, this.hash, upd);
-        location.hash = "#" + (obj.mapTypeNum) + "/" + (obj.zoom) + "/" + (obj.center.join(','));
-      },
+      immediate: true,
     },
   },
   methods: {
     changeMapType: function changeMapType(id) {
       this.$data._map.setMapTypeId(id);
     },
+    onhashchange: function onhashchange(ref) {
+      var newURL = ref.newURL;
+
+      var newHash = newURL.slice(newURL.indexOf('#'));
+      if (RE_HASH.test(newHash)) {
+        var tokens = RE_HASH.exec(newHash);
+        this.mapTypeNum = +tokens[1];
+        this.zoom = +tokens[2];
+        this.center = tokens[3].split(',').map(function (n) { return +n; });
+      }
+    },
   },
-  beforeMount: function beforeMount() {
-    if (!this.hash) {
-      this.hash = {
-        mapTypeNum: this.mapTypeNum,
-        zoom: this.zoom,
-        center: this.center,
-      };
-    }
+  created: function created() {
+    // 监听 Hash 外部变化
+    window.onhashchange = this.onhashchange;
   },
   mounted: function mounted() {
+    var this$1 = this;
+
+    // 实例化地图对象
     var map = this.$data._map = new Map(document.getElementById('map'), {
       mapTypeId: mapTypeOpts[this.mapTypeNum].id,
       zoom: this.zoom,
       center: this.center,
       backgroundColor: '#000',
     });
+    // 添加视图类型
     mapTypeOpts.forEach(function (opts) {
       map.addMapType(opts);
+    });
+    // 添加事件
+    map.addListener('center_changed', function (_){
+      this$1.center = map.getCenterCoord();
     });
   },
 });
