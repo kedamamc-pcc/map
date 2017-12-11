@@ -1,0 +1,20 @@
+{
+  "name": "kpcc-map",
+  "version": "1.0.0",
+  "description": "KedamaMC Unofficial Map",
+  "author": "SilentDepth <silentdepth@outlook.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "poi"
+  },
+  "dependencies": {
+    "normalize.css": "^7.0.0",
+    "vue": "^2.5.9"
+  },
+  "devDependencies": {
+    "poi": "^9.5.9",
+    "postcss-cssnext": "^3.0.2",
+    "postcss-import": "^11.0.0"
+  }
+}

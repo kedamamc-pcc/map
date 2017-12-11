@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>「非官方」毛线主世界地图</title>
+  <% if (htmlWebpackPlugin.options.env === 'production') { %>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@7.0.0/normalize.min.css">
+  <% } %>
+</head>
+<body>
+<noscript>
+  You need to enable JavaScript to run this app.
+</noscript>
+<div id="app"></div>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_FrfIceV_JYILsYCShrVo50r3HE7yvBw"></script>
+<% if (htmlWebpackPlugin.options.env === 'production') { %>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.5.9/dist/vue.runtime.min.js"></script>
+<% } %>
+</body>
+</html>
